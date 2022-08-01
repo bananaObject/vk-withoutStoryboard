@@ -127,10 +127,12 @@ extension LoginViewController: WKNavigationDelegate {
         
         decisionHandler(.cancel)
 
-        presenter.viewDidSaveToken(fragment)
-        presenter.viewDidOpenMainScreen()
+        presenter.saveToken(fragment)
+        presenter.openMainScreen()
     }
 }
+
+// MARK: - LoginViewInput
 
 extension LoginViewController: LoginViewInput {
     func loadWebView(_ request: URLRequest) {

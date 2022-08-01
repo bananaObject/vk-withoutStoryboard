@@ -9,7 +9,7 @@ import Foundation
 // import Firebase
 
 protocol LoginInteractorInput {
-    func getUrlRequest() -> URLRequest?
+    var urlRequest: URLRequest? { get }
     func saveToken(_ fragment: String)
 }
 
@@ -17,7 +17,7 @@ class LoginInteractor: LoginInteractorInput {
     
     // MARK: - Public Methods
 
-    func getUrlRequest() -> URLRequest? {
+    var urlRequest: URLRequest? {
         // Данные для загрузки страницы
         var urlComponents = URLComponents()
         urlComponents.scheme = "https"

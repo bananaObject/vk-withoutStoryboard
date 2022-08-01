@@ -12,7 +12,7 @@ protocol StartViewInput {
 }
 
 protocol StartViewOutput {
-    func viewDidSelectScreen()
+    func selectScreen()
 }
 
 class StartPresenter {
@@ -35,10 +35,11 @@ class StartPresenter {
 
     // MARK: - Public Methods
 
-    private func selectScreen() {
+    private func checkToken() {
         Task { @MainActor in
             do {
                 let tokenIsValid = try await interactor.checkToken()
+                
                 if tokenIsValid {
                     router.openMainScreen()
                 } else {
@@ -54,8 +55,8 @@ class StartPresenter {
 }
 
 extension StartPresenter: StartViewOutput {
-    func viewDidSelectScreen() {
+    func selectScreen() {
         viewInput?.loadAnimation(true)
-        selectScreen()
+        checkToken()
     }
 }

@@ -40,7 +40,7 @@ final class StartViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
-        selectScreen()
+        checkToken()
     }
 
     // MARK: - Setting UI Method
@@ -58,8 +58,8 @@ final class StartViewController: UIViewController {
 
     // MARK: - Private Methods
 
-    private func selectScreen() {
-        presenter.viewDidSelectScreen()
+    private func checkToken() {
+        presenter.selectScreen()
     }
 }
 
