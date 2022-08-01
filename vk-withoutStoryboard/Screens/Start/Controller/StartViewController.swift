@@ -14,7 +14,7 @@ final class StartViewController: UIViewController {
 
     // MARK: - Computed Properties
 
-    private let loadingView: LoadingView = {
+    private lazy var loadingView: LoadingView = {
         let view = LoadingView(.blue)
         view.translatesAutoresizingMaskIntoConstraints = false
         return view

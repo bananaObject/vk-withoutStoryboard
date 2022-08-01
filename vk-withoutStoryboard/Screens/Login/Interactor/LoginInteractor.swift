@@ -9,16 +9,19 @@ import Foundation
 // import Firebase
 
 protocol LoginInteractorInput {
+    /// Url data  to load the page.
     var urlRequest: URLRequest? { get }
+
+    /// Save token in KeyChain.
+    /// - Parameter fragment: String Token
     func saveToken(_ fragment: String)
 }
 
 class LoginInteractor: LoginInteractorInput {
-    
-    // MARK: - Public Methods
+
+    // MARK: - Public Properties
 
     var urlRequest: URLRequest? {
-        // Данные для загрузки страницы
         var urlComponents = URLComponents()
         urlComponents.scheme = "https"
         urlComponents.host = "oauth.vk.com"
@@ -47,8 +50,11 @@ class LoginInteractor: LoginInteractorInput {
         autorizedRef.setValue(autorizedId.toAnyObject())
     }
 */
+
+    // MARK: - Public Methods
+    
     func saveToken(_ fragment: String) {
-        // Полученные параметры из ответа WebView
+        // Received parameters from WebView response
         let params: [String: String] = fragment
             .components(separatedBy: "&")
             .map { $0.components(separatedBy: "=") }
@@ -60,7 +66,7 @@ class LoginInteractor: LoginInteractorInput {
                 return dict
             }
 
-        // Запись токена и id
+        // Write token and id
         if let token: String = params["access_token"], let id: String = params["user_id"] {
             KeychainLayer.shared.set(token, key: .token)
             KeychainLayer.shared.set(id, key: .id)

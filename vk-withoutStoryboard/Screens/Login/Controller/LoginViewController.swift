@@ -13,7 +13,7 @@ final class LoginViewController: UIViewController {
 
     // MARK: - Visual Components
 
-    fileprivate let logoImage: UIImageView = {
+    fileprivate lazy var logoImage: UIImageView = {
         let nameImage = "vkLogo"
         let image: UIImage? = UIImage(named: nameImage)
         let imageView = UIImageView(image: image)
@@ -33,7 +33,7 @@ final class LoginViewController: UIViewController {
         return button
     }()
     
-    fileprivate let webView: WKWebView = {
+    fileprivate lazy var webView: WKWebView = {
         let webConfiguration = WKWebViewConfiguration()
         let view = WKWebView(frame: .zero, configuration: webConfiguration)
         view.translatesAutoresizingMaskIntoConstraints = false
@@ -66,7 +66,7 @@ final class LoginViewController: UIViewController {
 
     // MARK: - Setting UI Method
 
-    /// Настройка UI.
+    /// Setting UI.
     private func setupUI() {
         view.backgroundColor = .vkColor
         
@@ -84,7 +84,7 @@ final class LoginViewController: UIViewController {
             loginButton.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -10)
         ])
     }
-    /// Настройка WebView.
+    /// Setting  WebView.
     private func setupWebView() {
         // удаление лого и кнопки
         logoImage.removeFromSuperview()
@@ -102,9 +102,6 @@ final class LoginViewController: UIViewController {
     
     // MARK: - Actions
 
-    /// Action loginButton.
-    ///
-    /// Запуск WebView с страницей логина  VK.
     @objc private  func loginButtonActions() {
         setupWebView()
         presenter.viewDidLoadWebView()
@@ -135,6 +132,8 @@ extension LoginViewController: WKNavigationDelegate {
 // MARK: - LoginViewInput
 
 extension LoginViewController: LoginViewInput {
+    /// Launching WebView on the VKontakte login page.
+    /// - Parameter request: URLRequest
     func loadWebView(_ request: URLRequest) {
         webView.load(request)
     }

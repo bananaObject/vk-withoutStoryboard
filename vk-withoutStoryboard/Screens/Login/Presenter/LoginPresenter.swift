@@ -33,19 +33,14 @@ class LoginPresenter {
         self.interactor = interactor
         self.router = router
     }
-
-    // MARK: - Public Methods
-    
-    private func getURLRequest() -> URLRequest? {
-        return interactor.urlRequest
-    }
 }
 
 extension LoginPresenter: LoginViewOutput {
     // MARK: - Public Methods
     
     func viewDidLoadWebView() {
-        guard let request = getURLRequest() else { return }
+        guard let request = interactor.urlRequest else { return }
+
         viewInput?.loadWebView(request)
     }
 
