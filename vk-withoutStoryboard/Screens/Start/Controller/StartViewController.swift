@@ -40,7 +40,7 @@ final class StartViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
-        checkToken()
+        presenter.selectScreen()
     }
 
     // MARK: - Setting UI Method
@@ -55,24 +55,14 @@ final class StartViewController: UIViewController {
             loadingView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
         ])
     }
-
-    // MARK: - Private Methods
-
-    private func checkToken() {
-        presenter.selectScreen()
-    }
 }
 
 // MARK: - StartViewInput
 
 extension StartViewController: StartViewInput {
-    func loadAnimation(_ on: Bool) {
+    func loadingAnimation(_ on: Bool) {
         Task { @MainActor in
-            if on {
-                self.loadingView.animation(.on)
-            } else {
-                self.loadingView.animation(.off)
-            }
+            self.loadingView.animation(on)
         }
     }
 }

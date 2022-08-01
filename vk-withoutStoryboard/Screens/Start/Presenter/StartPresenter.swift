@@ -8,7 +8,7 @@
 import UIKit
 
 protocol StartViewInput {
-    func loadAnimation(_ on: Bool)
+    func loadingAnimation(_ on: Bool)
 }
 
 protocol StartViewOutput {
@@ -49,14 +49,14 @@ class StartPresenter {
                 print(error)
                 router.openLoginScreen()
             }
-            viewInput?.loadAnimation(false)
+            viewInput?.loadingAnimation(false)
         }
     }
 }
 
 extension StartPresenter: StartViewOutput {
     func selectScreen() {
-        viewInput?.loadAnimation(true)
+        viewInput?.loadingAnimation(true)
         checkToken()
     }
 }

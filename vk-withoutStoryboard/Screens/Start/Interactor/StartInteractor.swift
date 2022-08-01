@@ -11,7 +11,7 @@ protocol StartInteractorInput {
     func checkToken() async throws -> Bool
 }
 
-class StartInteractor: RequestBase, StartInteractorInput {
+class StartInteractor: RequestBase {
 
     // MARK: - Private Methods
 
@@ -27,6 +27,11 @@ class StartInteractor: RequestBase, StartInteractorInput {
 
         return result
     }
+}
+
+// MARK: - StartInteractorInput
+
+extension StartInteractor: StartInteractorInput {
 
     // MARK: - Public Methods
 
