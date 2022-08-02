@@ -61,8 +61,6 @@ final class StartViewController: UIViewController {
 
 extension StartViewController: StartViewInput {
     func loadingAnimation(_ on: Bool) {
-        Task { @MainActor in
-            self.loadingView.animation(on)
-        }
+        self.loadingView.animation(on)
     }
 }

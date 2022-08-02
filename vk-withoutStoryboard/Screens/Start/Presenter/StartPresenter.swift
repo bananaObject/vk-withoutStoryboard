@@ -35,21 +35,25 @@ class StartPresenter {
 
     // MARK: - Public Methods
 
-    private func checkToken() {
-        Task { @MainActor in
+    private func checkTokenAsync() {
+        Task(priority: .background) {
             do {
-                let tokenIsValid = try await interactor.checkToken()
-                
-                if tokenIsValid {
+                try await interactor.checkTokenAsync()
+
+                await MainActor.run {
                     router.openMainScreen()
-                } else {
-                    router.openLoginScreen()
                 }
             } catch {
                 print(error)
-                router.openLoginScreen()
+
+                await MainActor.run {
+                    router.openLoginScreen()
+                }
             }
-            viewInput?.loadingAnimation(false)
+
+            await MainActor.run {
+                viewInput?.loadingAnimation(false)
+            }
         }
     }
 }
@@ -57,6 +61,6 @@ class StartPresenter {
 extension StartPresenter: StartViewOutput {
     func selectScreen() {
         viewInput?.loadingAnimation(true)
-        checkToken()
+        checkTokenAsync()
     }
 }

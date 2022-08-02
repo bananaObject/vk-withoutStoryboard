@@ -8,7 +8,7 @@
 import Foundation
 
 protocol StartInteractorInput {
-    func checkToken() async throws -> Bool
+    func checkTokenAsync() async throws
 }
 
 class StartInteractor: RequestBase {
@@ -35,22 +35,11 @@ extension StartInteractor: StartInteractorInput {
 
     // MARK: - Public Methods
 
-    func checkToken() async throws -> Bool {
-        return await withCheckedContinuation { continuation in
-            Task {
-                do {
-                    let tokenIsValid = try await requestCheckTokenAsync()
+    func checkTokenAsync() async throws {
+        let tokenIsValid = try await requestCheckTokenAsync()
 
-                    if tokenIsValid {
-                        continuation.resume(returning: tokenIsValid)
-                    } else {
-
-                        continuation.resume(returning: false)
-                    }
-                } catch {
-                    throw MyError.tokenNotValid
-                }
-            }
+        if !tokenIsValid {
+            throw MyError.tokenNotValid
         }
     }
 }
