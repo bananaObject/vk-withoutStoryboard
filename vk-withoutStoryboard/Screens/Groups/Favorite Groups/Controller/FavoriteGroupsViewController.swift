@@ -1,61 +1,84 @@
 //
-//  FavoriteGroupsListViewController.swift
+//  FavoriteGroupsViewController.swift
 //  firstApp-withoutStoryboard
 //
 //  Created by Ke4a on 30.01.2022.
 //
 
-import RealmSwift
 import UIKit
 
-/// Экран групп пользователя.
-final class FavoriteGroupsListViewController: UIViewController {
-    // MARK: - Private Properties
-    private let tableView: UITableView = {
+final class FavoriteGroupsViewController: UIViewController {
+
+    // MARK: - Visual Components
+
+    private lazy var tableView: UITableView = {
         let tableView = UITableView()
         tableView.translatesAutoresizingMaskIntoConstraints = false
         return tableView
     }()
 
-    private let loadingView: LoadingView = {
+    private lazy var loadingView: LoadingView = {
         let view = LoadingView()
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
 
-    private let searchBarHeader: SearchBarHeaderView  =  {
+    private lazy var searchBarHeader: SearchBarHeaderView  =  {
         let searchbar = SearchBarHeaderView()
         searchbar.translatesAutoresizingMaskIntoConstraints = false
         return searchbar
     }()
 
-    /// Провайдер.
-    private let provider = FavoriteGroupsScreenProvider()
+    // MARK: - Public Properties
 
-    // MARK: - Lifecycle
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        setupUI()
-        provider.createNotificationToken(tableView)
-        provider.fetchData(loadingView)
-        searchBarHeader.setDelegate(self)
-        tableView.register(GroupTableViewCell.self, forCellReuseIdentifier: GroupTableViewCell.identifier)
-        self.tableView.delegate = self
-        self.tableView.dataSource = self
+    var viewModels: [GroupViewModel] = []
+
+    // MARK: - Private Properties
+
+    private let presenter: FavoriteGroupsViewOutput
+
+    // MARK: - Initialization
+
+    init(_ presenter: FavoriteGroupsViewOutput) {
+        self.presenter = presenter
+        super.init(nibName: nil, bundle: nil)
     }
 
-    // MARK: - Setting UI Method
-    /// Найстройка UI.
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    // MARK: - Lifecycle
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+
+        setupUI()
+        setupRightBarButton()
+
+        presenter.createNotificationToken()
+        presenter.requestGroups()
+
+        tableView.register(GroupTableViewCell.self, forCellReuseIdentifier: GroupTableViewCell.identifier)
+
+        self.tableView.delegate = self
+        self.tableView.dataSource = self
+        self.searchBarHeader.delegate = self
+    }
+
+    // MARK: - Setting UI Methods
+
+    /// Setting UI Methods.
     private func setupUI() {
         self.title = "Groups"
 
         self.view.addSubview(searchBarHeader)
+        searchBarHeader.setHeightConstraint(0)
         NSLayoutConstraint.activate([
             searchBarHeader.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             searchBarHeader.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
             searchBarHeader.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor)
         ])
-        searchBarHeader.setHeightConstraint(0)
 
         self.view.addSubview(self.tableView)
         NSLayoutConstraint.activate([
@@ -72,7 +95,10 @@ final class FavoriteGroupsListViewController: UIViewController {
             loadingView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
             loadingView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor)
         ])
+    }
 
+    /// Setting RightBar Button.
+    private func setupRightBarButton() {
         let addButton = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addButtonAction))
         addButton.tintColor = .black
         navigationItem.setRightBarButton(addButton, animated: true)
@@ -86,36 +112,62 @@ final class FavoriteGroupsListViewController: UIViewController {
     }
 
     // MARK: - Actions
-    /// Action кнопки поиска.
+
     @objc private func searchButtonAction() {
         searchBarHeader.switchSearchBar()
     }
 
-    /// Action кнопки добавления группы.
     @objc private func addButtonAction() {
-        let allGroupsVC = CatalogGroupsListViewController()
-        navigationController?.pushViewController(allGroupsVC, animated: false)
+        presenter.openCatalogGroups()
+    }
+}
+
+// MARK: - FavoriteGroupsViewInput
+
+extension FavoriteGroupsViewController: FavoriteGroupsViewInput {
+    func updateTableView(_ from: UpdatesIndexPaths? = nil) {
+        guard let indexPath = from else {
+            tableView.reloadData()
+            return
+        }
+
+        tableView.beginUpdates()
+        tableView.deleteRows(at: indexPath.deleteRows, with: .automatic)
+        tableView.insertRows(at: indexPath.insertRows, with: .automatic)
+        tableView.reloadRows(at: indexPath.reloadRows, with: .automatic)
+        tableView.endUpdates()
+    }
+
+    func loadingAnimation(_ on: Bool) {
+        loadingView.animation(on)
     }
 }
 
 // MARK: - UITableViewDataSource
-extension FavoriteGroupsListViewController: UITableViewDataSource {
+
+extension FavoriteGroupsViewController: UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        provider.data.count
+        viewModels.count
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         guard let cell: GroupTableViewCell = tableView.dequeueReusableCell(
             withIdentifier: GroupTableViewCell.identifier
-        ) as? GroupTableViewCell else { return UITableViewCell() }
-        let group = provider.data[indexPath.row]
+        ) as? GroupTableViewCell else {
+            preconditionFailure("FavoriteGroupsViewController.dequeueReusableCell Error") }
+        let group = viewModels[indexPath.row]
+
         cell.configure(group: group)
+
+        presenter.loadImageAsync(for: indexPath, from: group)
+
         return cell
     }
 }
 
 // MARK: - UITableViewDelegate
-extension FavoriteGroupsListViewController: UITableViewDelegate {
+
+extension FavoriteGroupsViewController: UITableViewDelegate {
     func tableView(
         _ tableView: UITableView,
         trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath
@@ -123,14 +175,14 @@ extension FavoriteGroupsListViewController: UITableViewDelegate {
         let delete: UIContextualAction = deleteAction(at: indexPath)
         return UISwipeActionsConfiguration(actions: [delete])
     }
-    // MARK: - Actions
-    ///  Action удаление группы у ячейки.
-    /// - Parameter indexPath: Индекс группы.
-    /// - Returns: UIContextualAction для tableView SwipeActionsConfigurationForRowAt.
+
+    // MARK: - SwipeActions
+
     private func deleteAction(at indexPath: IndexPath) -> UIContextualAction {
-        let action = UIContextualAction(style: .destructive, title: "Delete") { [self] _, _, _ in
-            let group: GroupModel = provider.data[indexPath.row]
-            self.provider.deleteInRealm(group)
+        let action = UIContextualAction(style: .destructive, title: "Delete") { [weak self] _, _, _ in
+            guard let group = self?.viewModels[indexPath.row] else { return }
+            
+            self?.presenter.deleteInRealm(group)
         }
         action.backgroundColor = .red
         action.image = UIImage(systemName: "trash.fill")
@@ -139,23 +191,13 @@ extension FavoriteGroupsListViewController: UITableViewDelegate {
 }
 
 // MARK: - UISearchBarDelegate
-extension FavoriteGroupsListViewController: UISearchBarDelegate {
+
+extension FavoriteGroupsViewController: UISearchBarDelegate {
     func searchBarTextDidEndEditing(_ searchBar: UISearchBar) {
-        // Если поиск завершен, то сбрасывается поисковое слово в сервисном слое.
-        self.provider.setSearchText()
+        self.presenter.updateSearchText("")
     }
 
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
-        // Если текст searchBar пуст, то сбрасывается поисковое слово в сервисном слое.
-        if searchText.isEmpty {
-            self.provider.setSearchText()
-            tableView.reloadData()
-        } else {
-            Task {
-                // текст поиска передается в Провайдер
-                self.provider.setSearchText(searchText)
-                tableView.reloadData()
-            }
-        }
+        self.presenter.updateSearchText(searchText)
     }
 }

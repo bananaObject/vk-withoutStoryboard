@@ -7,7 +7,6 @@
 
 import UIKit
 
-/// Экран панели вкладок.
 final class TabBarViewController: UITabBarController {
     // MARK: - Private Properties
     private let friendsScreen: UIViewController = {
@@ -26,7 +25,7 @@ final class TabBarViewController: UITabBarController {
         let imageFill = UIImage(systemName: "crown.fill")
         let tarBarItem = UITabBarItem(title: "Groups", image: image, selectedImage: imageFill)
 
-        let viewController = UINavigationController(rootViewController: FavoriteGroupsListViewController())
+        let viewController = UINavigationController(rootViewController: ScreenModuleBuilder.favoriteGroupsScreenBuild())
         viewController.view.backgroundColor = .white
         viewController.tabBarItem = tarBarItem
         return viewController

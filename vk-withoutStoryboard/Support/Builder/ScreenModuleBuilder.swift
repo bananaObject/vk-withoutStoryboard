@@ -41,4 +41,38 @@ class ScreenModuleBuilder {
         let viewController = TabBarViewController()
         return viewController
     }
+
+    static func favoriteGroupsScreenBuild() -> (UIViewController & FavoriteGroupsViewInput) {
+        let api = Api()
+
+        let realm = RealmLayer()
+
+        let interactor = FavoriteGroupsInteractor(api, realm)
+        let router = FavoriteGroupsRouter()
+        let presenter = FavoriteGroupsPresenter(interactor, router)
+
+        interactor.presenter = presenter
+
+        let viewController = FavoriteGroupsViewController(presenter)
+
+        router.viewController = viewController
+        presenter.viewInput = viewController
+
+        return viewController
+    }
+
+    static func catalogGroupsScreenBuild() -> (UIViewController & CatalogGroupsViewInput) {
+        let api = Api()
+
+        let interactor = CatalogGroupsInteractor(api)
+        let router = CatalogGroupsRouter()
+        let presenter = CatalogGroupsPresenter(interactor, router)
+
+        let viewController = CatalogGroupsViewController(presenter: presenter)
+
+        router.viewController = viewController
+        presenter.viewInput = viewController
+
+        return viewController
+    }
 }
