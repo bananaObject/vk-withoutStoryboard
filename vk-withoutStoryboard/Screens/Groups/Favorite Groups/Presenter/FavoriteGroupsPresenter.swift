@@ -10,7 +10,8 @@ import UIKit
 protocol FavoriteGroupsViewInput {
     var viewModels: [GroupViewModel] { get set }
     func loadingAnimation(_ on: Bool)
-    func updateTableView(_ from: UpdatesIndexPaths?)
+    func updateTableView(_ from: UpdateIndexPaths?)
+    func updateTableView(_ from: IndexPath)
 }
 
 protocol FavoriteGroupsViewOutput {
@@ -51,7 +52,6 @@ extension FavoriteGroupsPresenter: FavoriteGroupsViewOutput {
 
             await MainActor.run {
                 self.interactor.saveInRealm(response)
-                self.viewInput?.updateTableView(nil)
                 self.viewInput?.loadingAnimation(false)
             }
         }
@@ -80,10 +80,8 @@ extension FavoriteGroupsPresenter: FavoriteGroupsViewOutput {
             let data = await interactor.loadImageDataAsync(url: group.photo200)
             self.viewInput?.viewModels[index.row].imageData = data
 
-            let indexPath = UpdatesIndexPaths(reload: [index])
-
             await MainActor.run {
-                self.viewInput?.updateTableView(indexPath)
+                self.viewInput?.updateTableView(index)
             }
         }
     }
@@ -92,11 +90,30 @@ extension FavoriteGroupsPresenter: FavoriteGroupsViewOutput {
 // MARK: - FavoriteGroupsInteractorOutput
 
 extension FavoriteGroupsPresenter: FavoriteGroupsInteractorOutput {
-    func updateView(_ from: UpdatesIndexPaths?) {
-        viewInput?.updateTableView(from)
-    }
-    
-    func updateViewModels(_ models: [GroupViewModel]) {
-        viewInput?.viewModels = models
+    func updateViewModels(_ models: UpdateViewModels, _ index: UpdateIndexPaths) {
+        if index.updateAll {
+            viewInput?.viewModels = models.updateAll
+            viewInput?.updateTableView(nil)
+
+            return
+        }
+
+        var models = models
+
+        index.deleteRows.forEach { index in
+            viewInput?.viewModels.remove(at: index.row)
+        }
+
+        index.reloadRows.forEach { index in
+            let group = models.reload.removeFirst()
+            viewInput?.viewModels[index.row] = group
+        }
+
+        index.insertRows.forEach { index in
+            let group = models.insert.removeFirst()
+            viewInput?.viewModels.insert(group, at: index.row)
+        }
+
+        viewInput?.updateTableView(index)
     }
 }

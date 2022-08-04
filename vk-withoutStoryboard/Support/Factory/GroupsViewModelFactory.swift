@@ -12,7 +12,7 @@ class GroupsViewModelFactory {
         return groups.compactMap { getViewModel(from: $0) }
     }
 
-    private func getViewModel(from group: RLMGroup) -> GroupViewModel {
+    func getViewModel(from group: RLMGroup) -> GroupViewModel {
         return GroupViewModel(
             id: group.id,
             type: group.type,

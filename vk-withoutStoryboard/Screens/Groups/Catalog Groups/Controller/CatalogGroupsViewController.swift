@@ -1,6 +1,6 @@
 //
 //  CatalogGroupsViewController.swift
-//  firstApp-withoutStoryboard
+//  vk-withoutStoryboard
 //
 //  Created by Ke4a on 31.01.2022.
 //

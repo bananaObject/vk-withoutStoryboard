@@ -1,6 +1,6 @@
 //
 //  FavoriteGroupsViewController.swift
-//  firstApp-withoutStoryboard
+//  vk-withoutStoryboard
 //
 //  Created by Ke4a on 30.01.2022.
 //
@@ -125,7 +125,13 @@ final class FavoriteGroupsViewController: UIViewController {
 // MARK: - FavoriteGroupsViewInput
 
 extension FavoriteGroupsViewController: FavoriteGroupsViewInput {
-    func updateTableView(_ from: UpdatesIndexPaths? = nil) {
+    func updateTableView(_ from: IndexPath) {
+        tableView.beginUpdates()
+        tableView.reloadRows(at: [from], with: .automatic)
+        tableView.endUpdates()
+    }
+
+    func updateTableView(_ from: UpdateIndexPaths? = nil) {
         guard let indexPath = from else {
             tableView.reloadData()
             return

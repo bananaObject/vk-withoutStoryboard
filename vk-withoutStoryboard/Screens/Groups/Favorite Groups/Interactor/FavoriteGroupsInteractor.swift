@@ -16,11 +16,6 @@ protocol FavoriteGroupsInteractorInput {
     /// - Returns: Realm model group.
     func requestGroupsAsync() async throws -> [RLMGroup]
 
-    /// Сonvert to viewModels.
-    /// - Parameter rmls: Realm results
-    /// - Returns: Group viewModel.
-    func convertToViewModels(_ rmls: Results<RLMGroup>) -> [GroupViewModel]
-
     /// Save realmModel in db.
     /// - Parameter newGroups: array realmModel.
     func saveInRealm(_ newGroups: [RLMGroup])
@@ -38,29 +33,30 @@ protocol FavoriteGroupsInteractorInput {
     func loadImageDataAsync(url: String) async -> Data?
 }
 
-protocol FavoriteGroupsInteractorOutput {
-    func updateViewModels(_ models: [GroupViewModel])
-    func updateView(_ from: UpdatesIndexPaths?)
+protocol FavoriteGroupsInteractorOutput: AnyObject {
+    func updateViewModels(_ models: UpdateViewModels, _ index: UpdateIndexPaths)
 }
 
-class FavoriteGroupsInteractor: FavoriteGroupsInteractorInput {
+class FavoriteGroupsInteractor {
 
     // MARK: - Public Properties
 
-    var presenter: FavoriteGroupsInteractorOutput?
+    weak var presenter: FavoriteGroupsInteractorOutput?
 
     var searchText: String = "" {
         didSet {
-            let models = convertToViewModels(realmData)
+            let models = constructViewModels(RMLData)
 
-            presenter?.updateViewModels(models)
-            presenter?.updateView(nil)
+            let update = UpdateViewModels(updateAll: models)
+            let index = UpdateIndexPaths(updateAll: true)
+
+            presenter?.updateViewModels(update, index)
         }
     }
 
     // MARK: - Private Properties
 
-    private var realmData: Results<RLMGroup> {
+    private var RMLData: Results<RLMGroup> {
         if searchText.isEmpty {
             return realm.read(RLMGroup.self)
         }
@@ -85,6 +81,19 @@ class FavoriteGroupsInteractor: FavoriteGroupsInteractorInput {
         notificationToken?.invalidate()
     }
 
+    // MARK: - Private Methods
+
+    private func constructViewModels(_ rmls: Results<RLMGroup>) -> [GroupViewModel] {
+        let result = Array(rmls)
+        return groupsFactory.constructViewModels(from: result)
+    }
+
+    private func getViewModel(_ rml: RLMGroup) -> GroupViewModel {
+        groupsFactory.getViewModel(from: rml)
+    }
+}
+
+extension FavoriteGroupsInteractor: FavoriteGroupsInteractorInput {
     // MARK: - Public Methods
 
     func requestGroupsAsync() async throws -> [RLMGroup] {
@@ -99,18 +108,18 @@ class FavoriteGroupsInteractor: FavoriteGroupsInteractorInput {
         }
     }
 
-    func convertToViewModels(_ rmls: Results<RLMGroup>) -> [GroupViewModel] {
-        let result = Array(rmls)
-        return groupsFactory.constructViewModels(from: result)
-    }
-
     func saveInRealm(_ newGroups: [RLMGroup]) {
-        // Groups from which the user left, but they are still present in the database
+        // Groups that the user left or the group data was updated, but they are still present in the database
         let oldValues: [RLMGroup] = self.realm.read(RLMGroup.self).filter { oldGroup in
-            !newGroups.contains { $0.id == oldGroup.id }
+            if let group = newGroups.first(where: { $0.id == oldGroup.id }) {
+                var result = group == oldGroup
+                result.toggle()
+                return result
+            }
+            return true
         }
 
-        // Deleting groups the user has logged out of
+        // Deleting groups the user has logged out of or the group data was updated
         if !oldValues.isEmpty {
             self.realm.delete(objects: oldValues)
         }
@@ -120,38 +129,76 @@ class FavoriteGroupsInteractor: FavoriteGroupsInteractorInput {
     }
 
     func deleteInRealm(_ group: GroupViewModel) {
-        guard let group = realmData.first(where: { $0.id == group.id }) else { return }
+        guard let group = RMLData.first(where: { $0.id == group.id }) else { return }
         realm.delete(object: group)
     }
 
     func createNotificationToken() {
         // Subscription to db changes
         // You can also subscribe to changes to a specific object
-        notificationToken = realmData.observe { result in
+        notificationToken = RMLData.observe { result in
             switch result {
                 // At initialization
             case .initial(let RLMGroups):
+                let viewModels = self.constructViewModels(RLMGroups)
 
-                let viewModels = self.convertToViewModels(RLMGroups)
-                self.presenter?.updateViewModels(viewModels)
+                let update = UpdateViewModels(updateAll: viewModels)
+                let index = UpdateIndexPaths(updateAll: true)
 
+                self.presenter?.updateViewModels(update, index)
                 // At changes db
             case .update(let RLMGroups,
                          let deletions,
                          let insertions,
                          let modifications):
-                let viewModels = self.convertToViewModels(RLMGroups)
 #warning("Иправить ошибку при использование вместе поиска и удаление ячейки")
 #warning("Иправить баг что добавляется новая группа в конец списка")
-                let deletionsIndexPath: [IndexPath] = deletions.map { IndexPath(row: $0, section: 0) }
-                let insertionsIndexPath: [IndexPath] = insertions.map { IndexPath(row: $0, section: 0) }
-                let modificationsIndexPath: [IndexPath] = modifications.map { IndexPath(row: $0, section: 0) }
-                let indexPath = UpdatesIndexPaths(delete: deletionsIndexPath,
-                                                  insert: insertionsIndexPath,
-                                                  reload: modificationsIndexPath)
+                Task { @MainActor in
+                    let actor = RealmUpdateActor()
+                    let RLMs = Array(RLMGroups)
+                    // concurrent processing
+                    await withTaskGroup(of: Void.self) { group in
+                        if !deletions.isEmpty {
+                            group.addTask(priority: .background) {
+                                let indeces = deletions.map { IndexPath(row: $0, section: 0) }
+                                await actor.append(indeces, row: .delete)
+                            }
+                        }
 
-                self.presenter?.updateViewModels(viewModels)
-                self.presenter?.updateView(indexPath)
+                        if !insertions.isEmpty {
+                            group.addTask { @MainActor in
+                                var groups: [GroupViewModel] = []
+
+                                let indeces: [IndexPath] = insertions.map { index in
+                                    let group = self.getViewModel(RLMs[index])
+                                    groups.append(group)
+
+                                    return IndexPath(row: index, section: 0)
+                                }
+
+                                await actor.append(indeces, row: .insert)
+                                await actor.append(groups, row: .insert)
+                            }
+                        }
+
+                        if !modifications.isEmpty {
+                            group.addTask { @MainActor in
+                                var groups: [GroupViewModel] = []
+
+                                let indeces: [IndexPath] = modifications.map { index in
+                                    let group = self.getViewModel(RLMs[index])
+                                    groups.append(group)
+
+                                    return IndexPath(row: index, section: 0)
+                                }
+
+                                await actor.append(indeces, row: .reload)
+                                await actor.append(groups, row: .reload)
+                            }
+                        }
+                    }
+                    await self.presenter?.updateViewModels(actor.update, actor.indexPath)
+                }
                 // Ar error
             case .error(let error):
                 print(error)
