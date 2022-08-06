@@ -1,6 +1,6 @@
 //
 //  AppDelegate.swift
-//  firstApp-withoutStoryboard
+//  vk-withoutStoryboard
 //
 //  Created by Ke4a on 26.01.2022.
 //

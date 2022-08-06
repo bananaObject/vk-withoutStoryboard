@@ -8,14 +8,14 @@
 import Foundation
 
 protocol ApiLayer: RequestBase {
-    func sendRequestList<T: ModelApiMark>(
+    func sendRequestList<T: RealmModel>(
         endpoint: ApiEndpoint,
         responseModel: T.Type
     ) async -> Result<ResponseList<T>, RequestError>
 }
 
 extension ApiLayer {
-    func sendRequestList<T: ModelApiMark>(
+    func sendRequestList<T: RealmModel>(
         endpoint: ApiEndpoint,
         responseModel: T.Type
     ) async -> Result<ResponseList<T>, RequestError> {
@@ -30,7 +30,7 @@ extension ApiLayer {
         }
     }
 
-    private func decodeResponse<T: ModelApiMark>(data: Data, decodeModel: T.Type) async throws -> ResponseList<T> {
+    private func decodeResponse<T: RealmModel>(data: Data, decodeModel: T.Type) async throws -> ResponseList<T> {
         do {
             let decoder = JSONDecoder()
 
@@ -82,7 +82,7 @@ extension ApiLayer {
 }
 
 class Api: ApiLayer {
-    func sendRequestList<T: ModelApiMark>(
+    func sendRequestList<T: RealmModel>(
         endpoint: ApiEndpoint,
         responseModel: T.Type
     ) async -> Result<ResponseList<T>, RequestError> {
@@ -97,7 +97,7 @@ class Api: ApiLayer {
         }
     }
 
-    private func decodeResponse<T: ModelApiMark>(data: Data, decodeModel: T.Type) async throws -> ResponseList<T> {
+    private func decodeResponse<T: RealmModel>(data: Data, decodeModel: T.Type) async throws -> ResponseList<T> {
         do {
             let decoder = JSONDecoder()
 

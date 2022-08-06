@@ -5,7 +5,6 @@
 //  Created by Ke4a on 17.03.2022.
 //
 
-import Foundation
 import RealmSwift
 import UIKit
 
@@ -24,7 +23,7 @@ final class Size: Object, Decodable {
 }
 
 /// Модель фото для Realm.
-final class RLMPhoto: Object, Decodable, ModelApiMark {
+final class RLMPhoto: Object, Decodable, RealmModel {
     @objc dynamic var id: Int = 0
     @objc dynamic var ownerId: Int = 0
     @objc dynamic var text: String = ""

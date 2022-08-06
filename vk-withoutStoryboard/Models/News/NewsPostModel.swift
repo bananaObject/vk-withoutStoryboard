@@ -9,7 +9,7 @@ import Foundation
 
 #warning("Расписать комментарии") 
 ///  Модель ответа для новостей.
-final class NewsPostModel: ModelApiMark {
+final class NewsPostModel: RealmModel {
     let sourceId: Int
     let date: Double
     let canDoubtCategory: Bool?

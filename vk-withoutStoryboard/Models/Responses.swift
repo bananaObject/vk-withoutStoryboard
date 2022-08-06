@@ -7,11 +7,8 @@
 
 import Foundation
 
-/// Метка для дженерика.
-protocol ModelApiMark: Decodable {}
-
 /// Дженерик ответ  сервера.
-final class ResponseItem<T: ModelApiMark>: Decodable {
+final class ResponseItem<T: RealmModel>: Decodable {
     let response: T
 
     private enum CodingKeys: String, CodingKey {
@@ -32,7 +29,7 @@ struct ResponseHelper {
 }
 
 /// Дженерик ответ  сервера  api для списка.
-final class ResponseList<T: ModelApiMark> {
+final class ResponseList<T: RealmModel> {
     let items: [T]
 
     var helper: ResponseHelper?

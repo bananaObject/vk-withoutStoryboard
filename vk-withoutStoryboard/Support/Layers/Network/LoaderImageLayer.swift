@@ -54,13 +54,16 @@ final class LoaderImageLayer {
         case .fileCache:
             if let imageCache = cacheFileImage.images[url.absoluteString] {
                 image = imageCache
+                return image
             } else if let imageCache: UIImage = cacheFileImage.getImage(for: url) {
                 image = imageCache
+                return image
             }
         case .nsCache:
             if let imageCache: UIImage = cacheNSImage.getImage(for: url.absoluteURL) {
                 // если есть отдаем фото из кэша
                 image = imageCache
+                return image
             }
         case .off:
             break
@@ -79,6 +82,15 @@ final class LoaderImageLayer {
         case 200...299:
             guard let imageResponse = UIImage(data: data) else { throw MyError.imageError }
             image = imageResponse
+
+            switch cache {
+            case .fileCache:
+                cacheFileImage.saveImage(url: url, dataImage: data)
+            case .nsCache:
+                break
+            case .off:
+                break
+            }
         case 401:
             throw RequestError.unauthorized
         default:
