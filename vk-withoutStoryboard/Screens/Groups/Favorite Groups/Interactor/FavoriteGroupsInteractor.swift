@@ -34,7 +34,7 @@ protocol FavoriteGroupsInteractorInput {
 }
 
 protocol FavoriteGroupsInteractorOutput: AnyObject {
-    func updateViewModels(_ models: UpdateViewModels, _ index: UpdateIndexPaths)
+    func updateViewModels(_ models: UpdateViewModelsHelper<GroupViewModel>, _ index: UpdatesIndexsHelper)
 }
 
 class FavoriteGroupsInteractor {
@@ -47,8 +47,8 @@ class FavoriteGroupsInteractor {
         didSet {
             let models = constructViewModels(RMLData)
 
-            let update = UpdateViewModels(updateAll: models)
-            let index = UpdateIndexPaths(updateAll: true)
+            let update = UpdateViewModelsHelper(updateAll: models)
+            let index = UpdatesIndexsHelper(updateAll: true)
 
             presenter?.updateViewModels(update, index)
         }
@@ -111,12 +111,7 @@ extension FavoriteGroupsInteractor: FavoriteGroupsInteractorInput {
     func saveInRealm(_ newGroups: [RLMGroup]) {
         // Groups that the user left or the group data was updated, but they are still present in the database
         let oldValues: [RLMGroup] = self.realm.read(RLMGroup.self).filter { oldGroup in
-            if let group = newGroups.first(where: { $0.id == oldGroup.id }) {
-                var result = group == oldGroup
-                result.toggle()
-                return result
-            }
-            return true
+            return !newGroups.contains(where: { $0.id == oldGroup.id })
         }
 
         // Deleting groups the user has logged out of or the group data was updated
@@ -142,8 +137,8 @@ extension FavoriteGroupsInteractor: FavoriteGroupsInteractorInput {
             case .initial(let RLMGroups):
                 let viewModels = self.constructViewModels(RLMGroups)
 
-                let update = UpdateViewModels(updateAll: viewModels)
-                let index = UpdateIndexPaths(updateAll: true)
+                let update = UpdateViewModelsHelper(updateAll: viewModels)
+                let index = UpdatesIndexsHelper(updateAll: true)
 
                 self.presenter?.updateViewModels(update, index)
                 // At changes db
@@ -154,14 +149,14 @@ extension FavoriteGroupsInteractor: FavoriteGroupsInteractorInput {
 #warning("Иправить ошибку при использование вместе поиска и удаление ячейки")
 #warning("Иправить баг что добавляется новая группа в конец списка")
                 Task { @MainActor in
-                    let actor = RealmUpdateActor()
+                    let actor = UpdateViewModelsActor<GroupViewModel>()
                     let RLMs = Array(RLMGroups)
                     // concurrent processing
                     await withTaskGroup(of: Void.self) { group in
                         if !deletions.isEmpty {
                             group.addTask(priority: .background) {
                                 let indeces = deletions.map { IndexPath(row: $0, section: 0) }
-                                await actor.append(indeces, row: .delete)
+                                await actor.append(indeces, to: .delete)
                             }
                         }
 
@@ -176,8 +171,8 @@ extension FavoriteGroupsInteractor: FavoriteGroupsInteractorInput {
                                     return IndexPath(row: index, section: 0)
                                 }
 
-                                await actor.append(indeces, row: .insert)
-                                await actor.append(groups, row: .insert)
+                                await actor.append(indeces, to: .insert)
+                                await actor.append(groups, to: .insert)
                             }
                         }
 
@@ -192,12 +187,12 @@ extension FavoriteGroupsInteractor: FavoriteGroupsInteractorInput {
                                     return IndexPath(row: index, section: 0)
                                 }
 
-                                await actor.append(indeces, row: .reload)
-                                await actor.append(groups, row: .reload)
+                                await actor.append(indeces, to: .reload)
+                                await actor.append(groups, to: .reload)
                             }
                         }
                     }
-                    await self.presenter?.updateViewModels(actor.update, actor.indexPath)
+                    await self.presenter?.updateViewModels(actor.models, actor.indexs)
                 }
                 // Ar error
             case .error(let error):

@@ -131,16 +131,16 @@ extension FavoriteGroupsViewController: FavoriteGroupsViewInput {
         tableView.endUpdates()
     }
 
-    func updateTableView(_ from: UpdateIndexPaths? = nil) {
+    func updateTableView(_ from: UpdatesIndexsHelper? = nil) {
         guard let indexPath = from else {
             tableView.reloadData()
             return
         }
 
         tableView.beginUpdates()
-        tableView.deleteRows(at: indexPath.deleteRows, with: .automatic)
-        tableView.insertRows(at: indexPath.insertRows, with: .automatic)
-        tableView.reloadRows(at: indexPath.reloadRows, with: .automatic)
+        tableView.deleteRows(at: indexPath.delete, with: .automatic)
+        tableView.insertRows(at: indexPath.insert, with: .automatic)
+        tableView.reloadRows(at: indexPath.reload, with: .automatic)
         tableView.endUpdates()
     }
 

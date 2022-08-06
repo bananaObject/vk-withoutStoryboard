@@ -10,7 +10,7 @@ import UIKit
 protocol FavoriteGroupsViewInput {
     var viewModels: [GroupViewModel] { get set }
     func loadingAnimation(_ on: Bool)
-    func updateTableView(_ from: UpdateIndexPaths?)
+    func updateTableView(_ from: UpdatesIndexsHelper?)
     func updateTableView(_ from: IndexPath)
 }
 
@@ -90,7 +90,7 @@ extension FavoriteGroupsPresenter: FavoriteGroupsViewOutput {
 // MARK: - FavoriteGroupsInteractorOutput
 
 extension FavoriteGroupsPresenter: FavoriteGroupsInteractorOutput {
-    func updateViewModels(_ models: UpdateViewModels, _ index: UpdateIndexPaths) {
+    func updateViewModels(_ models: UpdateViewModelsHelper<GroupViewModel>, _ index: UpdatesIndexsHelper) {
         if index.updateAll {
             viewInput?.viewModels = models.updateAll
             viewInput?.updateTableView(nil)
@@ -100,16 +100,16 @@ extension FavoriteGroupsPresenter: FavoriteGroupsInteractorOutput {
 
         var models = models
 
-        index.deleteRows.forEach { index in
+        index.delete.forEach { index in
             viewInput?.viewModels.remove(at: index.row)
         }
 
-        index.reloadRows.forEach { index in
+        index.reload.forEach { index in
             let group = models.reload.removeFirst()
             viewInput?.viewModels[index.row] = group
         }
 
-        index.insertRows.forEach { index in
+        index.insert.forEach { index in
             let group = models.insert.removeFirst()
             viewInput?.viewModels.insert(group, at: index.row)
         }
