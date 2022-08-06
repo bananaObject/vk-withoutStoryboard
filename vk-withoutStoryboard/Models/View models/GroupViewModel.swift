@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct GroupViewModel {
+struct GroupViewModel: ViewModel {
     var id: Int
     var type: String
     var name: String
