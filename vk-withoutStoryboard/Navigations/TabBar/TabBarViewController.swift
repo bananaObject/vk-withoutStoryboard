@@ -1,6 +1,6 @@
 //
 //  TabBarViewController.swift
-//  firstApp-withoutStoryboard
+//  vk-withoutStoryboard
 //
 //  Created by Ke4a on 27.01.2022.
 //
@@ -14,7 +14,7 @@ final class TabBarViewController: UITabBarController {
         let imageFill = UIImage(systemName: "person.3.fill")
         let tarBarItem = UITabBarItem(title: "Friends", image: image, selectedImage: imageFill)
 
-        let viewController = UINavigationController(rootViewController: FriendsViewController())
+        let viewController = UINavigationController(rootViewController: ScreenModuleBuilder.friendsScreenBuild())
         viewController.view.backgroundColor = .white
         viewController.tabBarItem = tarBarItem
         return viewController

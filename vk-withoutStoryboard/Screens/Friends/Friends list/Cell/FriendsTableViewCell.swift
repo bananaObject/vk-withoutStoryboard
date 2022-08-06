@@ -1,15 +1,15 @@
 //
 //  FriendsTableViewCell.swift
-//  firstApp-withoutStoryboard
+//  vk-withoutStoryboard
 //
 //  Created by Ke4a on 30.01.2022.
 //
 
 import UIKit
 
-/// Ячейка таблицы FriendsViewController.
 final class FriendsTableViewCell: UITableViewCell {
-    // MARK: - Private Properties
+    // MARK: - Visual Components
+
     private let fullNameLabel: UILabel = {
         let text = UILabel()
         text.translatesAutoresizingMaskIntoConstraints = false
@@ -24,9 +24,11 @@ final class FriendsTableViewCell: UITableViewCell {
     }()
 
     // MARK: - Static Properties
+
     static var identifier: String = "FriendsTableViewCell"
 
-    // MARK: - Initializers
+    // MARK: - Initialization
+
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         setupUI()
@@ -37,6 +39,7 @@ final class FriendsTableViewCell: UITableViewCell {
     }
 
     // MARK: - Prepare For Reuse
+
     override func prepareForReuse() {
         super.prepareForReuse()
         fullNameLabel.text = nil
@@ -44,15 +47,18 @@ final class FriendsTableViewCell: UITableViewCell {
     }
 
     // MARK: - Public Methods
-    /// Конфигурация ячейки.
-    /// - Parameter friend: Друг.
-    func configure(friend: RLMFriend) {
+
+    func configure(friend: FriendViewModel) {
         fullNameLabel.text = "\(friend.firstName) \(friend.lastName)"
-        avatarView.loadImage(friend.avatar)
+
+        if let data = friend.imageData {
+            let image = UIImage(data: data)
+            avatarView.setImage(image)
+        }
     }
 
     // MARK: - Setting UI Method
-    /// Настройка Ui.
+
     private func setupUI() {
         contentView.addSubview(avatarView)
         let topConstraint: NSLayoutConstraint = avatarView.topAnchor.constraint(

@@ -68,14 +68,8 @@ final class AvatarView: UIView {
     /// - Parameter url: Адрес изображения.
     ///
     /// Включено повтороное получение изображение из кэша
-    func loadImage(_ url: String) {
-        Task(priority: .background) {
-            do {
-                self.imageView.image = try await LoaderImageLayerProxy.shared.loadAsync(url: url, cache: .fileCache)
-            } catch {
-                print(error)
-            }
-        }
+    func setImage(_ image: UIImage?) {
+        self.imageView.image = image
     }
 
     // MARK: - Private Methods

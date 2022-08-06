@@ -61,6 +61,29 @@ class ScreenModuleBuilder {
         return viewController
     }
 
+    static func friendsScreenBuild() -> (UIViewController & FriendsListViewInput) {
+        let api = Api()
+        let realm = RealmLayer()
+
+        let interactor = FriendsListInteractor(api, realm)
+        let router = FriendsListRouter()
+        let presenter = FriendsListPresenter(interactor, router)
+
+        let viewController = FriendsListViewController(presenter)
+
+        presenter.viewInput = viewController
+        router.viewController = viewController
+
+        interactor.presenter = presenter
+
+        return viewController
+    }
+
+    #warning("-> (UIViewController & Дописать протокол)")
+    static func friendPhotosScreenBuild() -> (UIViewController) {
+        return FriendCollectionViewController()
+    }
+
     static func catalogGroupsScreenBuild() -> (UIViewController & CatalogGroupsViewInput) {
         let api = Api()
 

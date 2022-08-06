@@ -1,6 +1,6 @@
 //
-//  FriendsViewController.swift
-//  firstApp-withoutStoryboard
+//  FriendsListViewController.swift
+//  vk-withoutStoryboard
 //
 //  Created by Ke4a on 30.01.2022.
 //
@@ -8,9 +8,10 @@
 import RealmSwift
 import UIKit
 
-/// Экран друзей пользователя.
-final class FriendsViewController: UIViewController {
-    // MARK: - Private Properties
+final class FriendsListViewController: UIViewController {
+
+    // MARK: - Visual Components
+
     private let tableView: UITableView = {
         let tableView = UITableView()
         tableView.translatesAutoresizingMaskIntoConstraints = false
@@ -23,25 +24,43 @@ final class FriendsViewController: UIViewController {
         return view
     }()
 
-    private let provider = FriendsListScreenProvider()
+    // MARK: - Public Properties
 
-    private var token: NotificationToken?
+    var viewModels: [LetterViewModel] = []
 
+    // MARK: - Private Methods
+
+    private let presenter: FriendsListViewOutput
+
+    // MARK: - Initialization
+
+    init(_ presenter: FriendsListViewOutput) {
+        self.presenter = presenter
+        super.init(nibName: nil, bundle: nil)
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
     // MARK: - Lifecycle
+
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
-        createNotificationToken()
-        fetchFriends()
+
+        presenter.createNotificationToken()
+        presenter.fetchFriends()
+
         tableView.register(FriendsTableViewCell.self, forCellReuseIdentifier: FriendsTableViewCell.identifier)
-        tableView.register(
-            FriendsHeaderSectionTableView.self,
-            forHeaderFooterViewReuseIdentifier: FriendsHeaderSectionTableView.identifier)
+        tableView.register(FriendsHeaderSectionTableView.self,
+                           forHeaderFooterViewReuseIdentifier: FriendsHeaderSectionTableView.identifier)
         tableView.delegate = self
         tableView.dataSource = self
     }
 
     // MARK: - Setting UI Method
+
     private func setupUI() {
         tableView.sectionIndexColor = .vkColor
         tableView.sectionHeaderTopPadding = 5
@@ -65,96 +84,78 @@ final class FriendsViewController: UIViewController {
             loadingView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor)
         ])
     }
+}
 
-    // MARK: - Private Methods
-    /// Запрос друзей у api c  анимацией загрузки.
-    private func fetchFriends() {
-        provider.fetchData(loadingView)
+// MARK: - FriendsListViewInput
+
+extension FriendsListViewController: FriendsListViewInput {
+    func updateTableView(_ from: UpdatesIndexsHelper?) {
+        guard let updateIndexSet = from else {
+            tableView.reloadData()
+            return
+        }
+
+        tableView.beginUpdates()
+        tableView.insertSections(updateIndexSet.insertIndexSet, with: .automatic)
+        tableView.reloadSections(updateIndexSet.reloadIndexSet, with: .automatic)
+        tableView.deleteSections(updateIndexSet.deleteIndexSet, with: .automatic)
+        tableView.endUpdates()
     }
 
-    /// Регистрирует блок, который будет вызываться при каждом изменении секкций в бд.
-    private func createNotificationToken() {
-        token = provider.data.observe { [weak self] result in
-            guard let self: FriendsViewController = self  else { return }
-            switch result {
-            case .initial:
-                self.tableView.reloadData()
-            case .update(_, let deletions, let insertions, let modifications):
-                // секции в которой надо обновить список друзей
-                var reloadSections: [Int] = []
-                // секции которые стали пустые
-                var emptySections: [RLMLetter] = []
+    func updateRow(_ from: IndexPath) {
+        tableView.beginUpdates()
+        tableView.reloadRows(at: [from], with: .none)
+        tableView.endUpdates()
+    }
 
-                // сортирую секции на удаление и обновление
-                modifications.forEach { section in
-                    let letter: RLMLetter = self.provider.data[section]
-                    if letter.items.isEmpty {
-                        emptySections.append(letter)
-                    } else {
-                        reloadSections.append(section)
-                    }
-                }
-
-                if !insertions.isEmpty {
-                    self.tableView.insertSections(IndexSet(insertions), with: .automatic)
-                }
-
-                if !reloadSections.isEmpty {
-                    self.tableView.reloadSections(IndexSet(reloadSections), with: .automatic)
-                }
-
-                if !deletions.isEmpty {
-                    self.tableView.deleteSections(IndexSet(deletions), with: .automatic)
-                }
-
-                if !emptySections.isEmpty {
-                    // удаляю пустые секции
-                    self.provider.deleteInRealm(objects: emptySections)
-                }
-            case .error(let error):
-                print(error)
-            }
-        }
+    func loadingAnimation(_ on: Bool) {
+        loadingView.animation(on)
     }
 }
 
 // MARK: - UITableViewDataSource
-extension FriendsViewController: UITableViewDataSource {
+
+extension FriendsListViewController: UITableViewDataSource {
     func numberOfSections(in tableView: UITableView) -> Int {
-        provider.data.count
+        viewModels.count
     }
 
     func sectionIndexTitles(for tableView: UITableView) -> [String]? {
-        return provider.data.map { $0.name.uppercased() }
+        return viewModels.map { $0.name.uppercased() }
     }
 
     func tableView(_ tableView: UITableView,
                    sectionForSectionIndexTitle title: String,
-                   at index: Int) -> Int {
+                   at index: Int
+    ) -> Int {
         tableView.scrollToRow(at: .init(row: 0, section: index), at: .top, animated: true)
         return index
     }
 
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        provider.data[section].items.count
+        viewModels[section].items.count
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         guard let cell: FriendsTableViewCell = tableView.dequeueReusableCell(
             withIdentifier: FriendsTableViewCell.identifier
         ) as? FriendsTableViewCell else { return UITableViewCell() }
-        cell.configure(friend: provider.data[indexPath.section].items[indexPath.row])
+        let friend = viewModels[indexPath.section].items[indexPath.row]
+        cell.configure(friend: friend)
+
+        presenter.loadImageAsync(from: indexPath, for: friend)
+
         return cell
     }
 }
 
 // MARK: - UITableViewDelegate
-extension FriendsViewController: UITableViewDelegate {
+extension FriendsListViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         guard let header: FriendsHeaderSectionTableView = tableView.dequeueReusableHeaderFooterView(
             withIdentifier: FriendsHeaderSectionTableView.identifier
         ) as? FriendsHeaderSectionTableView else { return UITableViewCell() }
-        let letter: String = provider.data[section].name.uppercased()
+        let letter: String = viewModels[section].name.uppercased()
         header.configure(letter)
         return header
     }
@@ -171,25 +172,22 @@ extension FriendsViewController: UITableViewDelegate {
         return UISwipeActionsConfiguration(actions: [delete])
     }
 
-    // MARK: - Delegate Actions
-    /// Action для выбранной ячейки
-    /// - Parameter indexPath: индекс выбранной ячейки
     private func didSelectRowAction(_ indexPath: IndexPath) {
-        let friend: RLMFriend = provider.data[indexPath.section].items[indexPath.row]
-
-        let friendCollectionVC = FriendCollectionViewController()
-        friendCollectionVC.configure(friendId: friend.id)
-        navigationController?.pushViewController(friendCollectionVC, animated: true)
+        //        let friend: RLMFriend = provider.data[indexPath.section].items[indexPath.row]
+        //
+        //        let friendCollectionVC = FriendCollectionViewController()
+        //        friendCollectionVC.configure(friendId: friend.id)
+        //        navigationController?.pushViewController(friendCollectionVC, animated: true)
     }
 
-    ///  Action удаление друга у ячейки.
-    /// - Parameter indexPath: Индекс друга.
-    /// - Returns: UIContextualAction для tableView SwipeActionsConfigurationForRowAt.
+    /// Swipe action to remove a friend from the cell.
+    /// - Parameter indexPath: Friend's index.
+    /// - Returns: UIContextualAction for tableView
     private func deleteAction(at indexPath: IndexPath) -> UIContextualAction {
         let action = UIContextualAction(style: .destructive, title: "Delete") { [self] _, _, _ in
-            let friend: RLMFriend = provider.data[indexPath.section].items[indexPath.row]
-            provider.deleteInRealm(objects: [friend])
-            // В будущем добавлю удаление друга в апи.
+            let friend = viewModels[indexPath.section].items[indexPath.row]
+            presenter.deleteFriend(friend)
+            // In the future, I will add the removal of a friend in the api.
         }
         action.backgroundColor = #colorLiteral(red: 1, green: 0.3464992942, blue: 0.4803417176, alpha: 1)
         action.image = UIImage(systemName: "trash.fill")
