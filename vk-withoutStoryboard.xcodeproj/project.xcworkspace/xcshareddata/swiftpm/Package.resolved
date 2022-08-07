@@ -10,21 +10,12 @@
       }
     },
     {
-      "identity" : "promisekit",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/mxcl/PromiseKit",
-      "state" : {
-        "revision" : "c946b7561fbe11379a874e59faa2c5f8077ae0e1",
-        "version" : "6.17.1"
-      }
-    },
-    {
       "identity" : "realm-core",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/realm/realm-core",
       "state" : {
-        "revision" : "472d325a2e844fcb48c400db74e6b9646f92ca93",
-        "version" : "11.15.0"
+        "revision" : "ab2b4947cd559746c775a3024972c5a9a09c47ba",
+        "version" : "12.4.0"
       }
     },
     {
@@ -32,8 +23,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/realm/realm-swift.git",
       "state" : {
-        "revision" : "41fe221e2209ad31bee35593513d957dc3e6e458",
-        "version" : "10.25.2"
+        "revision" : "effb114129eed128007d343b9eb0323f7c49c328",
+        "version" : "10.28.4"
       }
     }
   ],

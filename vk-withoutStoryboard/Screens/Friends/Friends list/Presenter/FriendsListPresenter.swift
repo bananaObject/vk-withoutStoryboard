@@ -98,7 +98,7 @@ extension FriendsListPresenter: FriendsListViewOutput {
 // MARK: - FriendsListInteractorOutput
 
 extension FriendsListPresenter: FriendsListInteractorOutput {
-    func updateViewModels(_ models: UpdateViewModelsHelper<LetterViewModel>, _ indeces: UpdatesIndexsHelper) {
+    func updateViewModels(_ models: UpdatesViewModelsHelper<LetterViewModel>, _ indeces: UpdatesIndexsHelper) {
         if indeces.updateAll {
             viewInput?.viewModels = models.updateAll
             viewInput?.updateTableView(nil)

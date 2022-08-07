@@ -90,7 +90,7 @@ extension FavoriteGroupsPresenter: FavoriteGroupsViewOutput {
 // MARK: - FavoriteGroupsInteractorOutput
 
 extension FavoriteGroupsPresenter: FavoriteGroupsInteractorOutput {
-    func updateViewModels(_ models: UpdateViewModelsHelper<GroupViewModel>, _ index: UpdatesIndexsHelper) {
+    func updateViewModels(_ models: UpdatesViewModelsHelper<GroupViewModel>, _ index: UpdatesIndexsHelper) {
         if index.updateAll {
             viewInput?.viewModels = models.updateAll
             viewInput?.updateTableView(nil)

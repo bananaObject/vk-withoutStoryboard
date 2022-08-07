@@ -8,7 +8,7 @@
 import Foundation
 
 actor UpdateViewModelsActor<T: ViewModel> {
-    var models = UpdateViewModelsHelper<T>()
+    var models = UpdatesViewModelsHelper<T>()
     var indexs = UpdatesIndexsHelper()
 
     enum Update {

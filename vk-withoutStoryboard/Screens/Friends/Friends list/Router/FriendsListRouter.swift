@@ -15,7 +15,7 @@ class FriendsListRouter: FriendsListRouterInput {
     weak var viewController: UIViewController?
 
     func presentFriendPhotosVC(_ friend: RLMFriend) {
-        let vc = ScreenModuleBuilder.friendPhotosScreenBuild()
-        viewController?.navigationController?.pushViewController(vc, animated: true)
+        // let vc = ScreenModuleBuilder.friendPhotosScreenBuild(<#FriendViewModel#>)
+        // viewController?.navigationController?.pushViewController(vc, animated: true)
     }
 }

@@ -17,7 +17,7 @@ protocol FriendsListInteractorInput {
 }
 
 protocol FriendsListInteractorOutput: AnyObject {
-    func updateViewModels(_ models: UpdateViewModelsHelper<LetterViewModel>, _ index: UpdatesIndexsHelper)
+    func updateViewModels(_ models: UpdatesViewModelsHelper<LetterViewModel>, _ index: UpdatesIndexsHelper)
 }
 
 class FriendsListInteractor {
@@ -161,7 +161,7 @@ extension FriendsListInteractor: FriendsListInteractorInput {
             case .initial(let letterRealm):
                 let letters = Array(letterRealm)
 
-                let update = UpdateViewModelsHelper(updateAll: self.convertToViewModels(letters))
+                let update = UpdatesViewModelsHelper(updateAll: self.convertToViewModels(letters))
                 let index = UpdatesIndexsHelper(updateAll: true)
 
                 self.presenter?.updateViewModels(update, index)

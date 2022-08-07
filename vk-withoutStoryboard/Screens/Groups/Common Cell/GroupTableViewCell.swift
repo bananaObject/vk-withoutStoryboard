@@ -14,6 +14,7 @@ final class GroupTableViewCell: UITableViewCell {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
         label.backgroundColor = .white
+        label.numberOfLines = 0
         return label
     }()
 

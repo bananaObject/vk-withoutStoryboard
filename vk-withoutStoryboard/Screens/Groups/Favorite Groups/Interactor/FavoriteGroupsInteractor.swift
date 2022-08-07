@@ -34,7 +34,7 @@ protocol FavoriteGroupsInteractorInput {
 }
 
 protocol FavoriteGroupsInteractorOutput: AnyObject {
-    func updateViewModels(_ models: UpdateViewModelsHelper<GroupViewModel>, _ index: UpdatesIndexsHelper)
+    func updateViewModels(_ models: UpdatesViewModelsHelper<GroupViewModel>, _ index: UpdatesIndexsHelper)
 }
 
 class FavoriteGroupsInteractor {
@@ -47,7 +47,7 @@ class FavoriteGroupsInteractor {
         didSet {
             let models = constructViewModels(RMLData)
 
-            let update = UpdateViewModelsHelper(updateAll: models)
+            let update = UpdatesViewModelsHelper(updateAll: models)
             let index = UpdatesIndexsHelper(updateAll: true)
 
             presenter?.updateViewModels(update, index)
@@ -137,7 +137,7 @@ extension FavoriteGroupsInteractor: FavoriteGroupsInteractorInput {
             case .initial(let RLMGroups):
                 let viewModels = self.constructViewModels(RLMGroups)
 
-                let update = UpdateViewModelsHelper(updateAll: viewModels)
+                let update = UpdatesViewModelsHelper(updateAll: viewModels)
                 let index = UpdatesIndexsHelper(updateAll: true)
 
                 self.presenter?.updateViewModels(update, index)
