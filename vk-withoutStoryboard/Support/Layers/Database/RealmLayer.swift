@@ -155,6 +155,16 @@ final class RealmLayer {
         }
     }
 
+    func deleteWithoutNotifying<T: Object>(objects: [T], token: NotificationToken) {
+        do {
+            try realm.write(withoutNotifying: [token]) {
+                realm.delete(objects)
+            }
+        } catch {
+            printError(error)
+        }
+    }
+
     // MARK: - Private Methods
     private func printError(_ error: Error) {
         print("#ERROR_RealmService: \(error)")

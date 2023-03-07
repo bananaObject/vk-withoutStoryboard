@@ -39,4 +39,18 @@ final class RLMGroup: Object, Decodable, ModelApiMark {
     override class func primaryKey() -> String? {
         return "id"
     }
+    
+    static func == (lhs: RLMGroup, rhs: RLMGroup) -> Bool {
+        lhs.id == rhs.id &&
+        lhs.isAdmin == rhs.isAdmin &&
+        lhs.isAdvertiser == rhs.isAdvertiser &&
+        lhs.isClosed == rhs.isClosed &&
+        lhs.isMember == rhs.isMember &&
+        lhs.name == rhs.name &&
+        lhs.photo100 == rhs.photo100 &&
+        lhs.photo200 == rhs.photo200 &&
+        lhs.photo50 == rhs.photo50 &&
+        lhs.screenName == rhs.screenName &&
+        lhs.type == rhs.type
+    }
 }

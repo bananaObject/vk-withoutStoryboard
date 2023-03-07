@@ -10,6 +10,7 @@ import Foundation
 enum MyError: Error {
     case realmError
     case requestFail
-    case tokenNotValid
+    case decodeError
     case imageError
+    case tokenNotValid
 }

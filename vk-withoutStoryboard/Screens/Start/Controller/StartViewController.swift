@@ -11,24 +11,40 @@ import UIKit
 ///
 /// Проверяется работоспособность токена.
 final class StartViewController: UIViewController {
-    // MARK: - Private Properties
-    /// Провайдер.
-    private let provider = StartScreenProvider()
 
-    private let loadingView: LoadingView = {
+    // MARK: - Computed Properties
+
+    private lazy var loadingView: LoadingView = {
         let view = LoadingView(.blue)
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
+
+    // MARK: - Private Properties
+
+    private let presenter: StartViewOutput
+
+    // MARK: - Initialization
+
+    init(presenter: StartViewOutput) {
+        self.presenter = presenter
+        super.init(nibName: nil, bundle: nil)
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
     
     // MARK: - Lifecycle
+
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
-        choiceScreen()
+        presenter.selectScreen()
     }
 
     // MARK: - Setting UI Method
+
     /// Настройка UI.
     private func setupUI() {
         view.addSubview(loadingView)
@@ -39,25 +55,12 @@ final class StartViewController: UIViewController {
             loadingView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
         ])
     }
+}
 
-    // MARK: - Private Methods
-    private func choiceScreen() {
-        Task {
-            let controller: UIViewController
-            loadingView.animation(.on)
-            do {
-                let tokenIsValid = try await provider.requestCheckTokenAsync()
-                if !tokenIsValid {
-                    throw MyError.tokenNotValid
-                }
-                controller  = TabBarViewController()
-            } catch {
-                controller  = LoginViewController()
-                print(error)
-            }
-            self.loadingView.animation(.off)
-            controller.modalPresentationStyle = .fullScreen
-            self.present(controller, animated: false, completion: nil)
-        }
+// MARK: - StartViewInput
+
+extension StartViewController: StartViewInput {
+    func loadingAnimation(_ on: Bool) {
+        self.loadingView.animation(on)
     }
 }

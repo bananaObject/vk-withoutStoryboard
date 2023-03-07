@@ -10,8 +10,10 @@ import WebKit
 
 /// Экран авторизации пользователя.
 final class LoginViewController: UIViewController {
-    // MARK: - Private properties
-    fileprivate let logoImage: UIImageView = {
+
+    // MARK: - Visual Components
+
+    fileprivate lazy var logoImage: UIImageView = {
         let nameImage = "vkLogo"
         let image: UIImage? = UIImage(named: nameImage)
         let imageView = UIImageView(image: image)
@@ -31,17 +33,31 @@ final class LoginViewController: UIViewController {
         return button
     }()
     
-    fileprivate let webView: WKWebView = {
+    fileprivate lazy var webView: WKWebView = {
         let webConfiguration = WKWebViewConfiguration()
         let view = WKWebView(frame: .zero, configuration: webConfiguration)
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
-    
-    /// Провайдер.
-    fileprivate let provider = LoginScreenProvider()
+
+    // MARK: - Private Properties
+
+    fileprivate let presenter: LoginViewOutput
+
+    // MARK: - Initialization
+
+    init(presenter: LoginViewOutput) {
+        self.presenter = presenter
+
+        super.init(nibName: nil, bundle: nil)
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
     
     // MARK: - Lifecycle
+
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
@@ -49,7 +65,8 @@ final class LoginViewController: UIViewController {
     }
 
     // MARK: - Setting UI Method
-    /// Настройка UI.
+
+    /// Setting UI.
     private func setupUI() {
         view.backgroundColor = .vkColor
         
@@ -67,25 +84,12 @@ final class LoginViewController: UIViewController {
             loginButton.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -10)
         ])
     }
-    
-    // MARK: - Actions
-    /// Action loginButton.
-    ///
-    /// Запуск WebView с страницей логина  VK.
-    @objc private  func loginButtonActions() {
-        runWebView()
-    }
-}
-
-// MARK: - WebViewDelegate
-extension LoginViewController: WKNavigationDelegate {
-    // MARK: - Private Methods
-    /// Запуск WebView.
-    fileprivate func runWebView() {
+    /// Setting  WebView.
+    private func setupWebView() {
         // удаление лого и кнопки
         logoImage.removeFromSuperview()
         loginButton.removeFromSuperview()
-        
+
         view.backgroundColor = .white
         view.addSubview(webView)
         NSLayoutConstraint.activate([
@@ -94,26 +98,19 @@ extension LoginViewController: WKNavigationDelegate {
             webView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
             webView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor)
         ])
-        
-        // Данные для загрузки страницы
-        var urlComponents = URLComponents()
-        urlComponents.scheme = "https"
-        urlComponents.host = "oauth.vk.com"
-        urlComponents.path = "/authorize"
-        urlComponents.queryItems = [
-            URLQueryItem(name: "client_id", value: "8088608"),
-            URLQueryItem(name: "display", value: "mobile"),
-            URLQueryItem(name: "redirect_uri", value: "https://oauth.vk.com/blank.html"),
-            URLQueryItem(name: "scope", value: "offline, friends, photos, groups, wall"),
-            URLQueryItem(name: "response_type", value: "token")
-        ]
-        
-        guard let url = urlComponents.url else { return }
-        // Загрузка страницы
-        let myRequest = URLRequest(url: url)
-        webView.load(myRequest)
     }
     
+    // MARK: - Actions
+
+    @objc private  func loginButtonActions() {
+        setupWebView()
+        presenter.viewDidLoadWebView()
+    }
+}
+
+// MARK: - WebViewDelegate
+
+extension LoginViewController: WKNavigationDelegate {
     func webView(
         _ webView: WKWebView,
         decidePolicyFor navigationResponse: WKNavigationResponse,
@@ -126,34 +123,18 @@ extension LoginViewController: WKNavigationDelegate {
         }
         
         decisionHandler(.cancel)
-        
-        // Полученные параметры из ответа WebView
-        let params: [String: String] = fragment
-            .components(separatedBy: "&")
-            .map { $0.components(separatedBy: "=") }
-            .reduce([String: String]()) { result, param in
-                var dict = result
-                let key = param[0]
-                let value = param[1]
-                dict[key] = value
-                return dict
-            }
-        
-        // Запись токена и id
-        if let token: String = params["access_token"], let id: String = params["user_id"] {
-            KeychainLayer.shared.set(token, key: .token)
-            KeychainLayer.shared.set(id, key: .id)
-            
-            // service.firebaseAutorizedId(id)
-        }
 
-        presentController()
+        presenter.saveToken(fragment)
+        presenter.openMainScreen()
     }
+}
 
-    /// Переход на контроллер
-    private func presentController() {
-        let controller = TabBarViewController()
-        controller.modalPresentationStyle = .fullScreen
-        present(controller, animated: true, completion: nil)
+// MARK: - LoginViewInput
+
+extension LoginViewController: LoginViewInput {
+    /// Launching WebView on the VKontakte login page.
+    /// - Parameter request: URLRequest
+    func loadWebView(_ request: URLRequest) {
+        webView.load(request)
     }
 }

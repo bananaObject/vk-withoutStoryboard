@@ -14,11 +14,6 @@ extension LoadingView {
         case white
     }
 
-    enum Work {
-        case on
-        case off
-    }
-
     // MARK: - DotLabel
     fileprivate class DotLabel: UILabel {
         override init(frame: CGRect) {
@@ -98,9 +93,9 @@ final class LoadingView: UIView {
     // MARK: - Public Methods
     /// Запуск анимации.
     /// - Parameter work: вкл/выкл.
-    func animation(_ work: Work) {
+    func animation(_ work: Bool) {
         switch work {
-        case .on:
+        case true:
             self.isHidden = false
 
             var delay: Double = 0
@@ -112,7 +107,7 @@ final class LoadingView: UIView {
 
                 delay += 0.2
             }
-        case .off:
+        case false:
             self.isHidden = true
 
             dotArray.forEach { dot in

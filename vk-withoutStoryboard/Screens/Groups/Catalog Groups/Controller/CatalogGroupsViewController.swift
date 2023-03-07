@@ -1,15 +1,16 @@
 //
-//  CatalogGroupsListViewController.swift
-//  firstApp-withoutStoryboard
+//  CatalogGroupsViewController.swift
+//  vk-withoutStoryboard
 //
 //  Created by Ke4a on 31.01.2022.
 //
 
 import UIKit
 
-/// Экран каталога групп.
-final class CatalogGroupsListViewController: UIViewController {
-    // MARK: - Private Properties
+final class CatalogGroupsViewController: UIViewController {
+
+    // MARK: - Visual Components
+
     private let tableView: UITableView = {
         let tableView = UITableView()
         tableView.translatesAutoresizingMaskIntoConstraints = false
@@ -28,25 +29,43 @@ final class CatalogGroupsListViewController: UIViewController {
         return searchBar
     }()
 
-    /// Провайдер.
-    private let provider = CatalogGroupsScreenProvider()
+    // MARK: - Public Properties
+
+    var viewModels: [GroupViewModel] = []
+
+    // MARK: - Private Properties
+
+    private let presenter: CatalogGroupsViewOutput
+
+    // MARK: - Initialization
+
+    init(presenter: CatalogGroupsViewOutput) {
+        self.presenter = presenter
+        super.init(nibName: nil, bundle: nil)
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
 
     // MARK: - Lifecycle
+
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
-        fetchCatalogGroups()
-        searchBar.setDelegate(self)
+        presenter.fetchCatalog()
+
         tableView.register(GroupTableViewCell.self, forCellReuseIdentifier: GroupTableViewCell.identifier)
         tableView.delegate = self
         tableView.dataSource = self
+        searchBar.delegate = self
     }
 
     // MARK: - Setting UI Method
+
     /// Настройка UI.
     private func setupUI() {
         title = "Catalog Groups"
-        searchBar.setDelegate(self)
 
         view.addSubview(searchBar)
         NSLayoutConstraint.activate([
@@ -72,61 +91,77 @@ final class CatalogGroupsListViewController: UIViewController {
             loadingView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor)
         ])
     }
+}
 
-    // MARK: - Private Methods
-    /// Запрос каталога групп из  api  c анимацией загрузки.
-    private func fetchCatalogGroups() {
-        provider.fetchData(loadingView) {
-            self.tableView.reloadData()
+// MARK: - CatalogGroupsViewInput
+
+extension CatalogGroupsViewController: CatalogGroupsViewInput {
+
+    // MARK: - Public Methods
+
+    func updateTableView(for index: IndexPath? = nil) {
+        guard let index = index else {
+            tableView.reloadData()
+            return
         }
+
+        tableView.reloadRows(at: [index], with: .none)
+    }
+
+    func loadingAnimation(_ on: Bool) {
+        loadingView.animation(on)
     }
 }
 
 // MARK: - UITableViewDelegate
-extension CatalogGroupsListViewController: UITableViewDelegate {
+
+extension CatalogGroupsViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        // let selectGroup: GroupModel = provider.data[indexPath.row]
-        // self.service.firebaseSelectGroup(selectGroup)
-        navigationController?.popViewController(animated: false)
+        let model = viewModels[indexPath.row]
+        presenter.selectGroup(model)
     }
 }
 
 // MARK: - UITableViewDataSource
-extension CatalogGroupsListViewController: UITableViewDataSource {
+
+extension CatalogGroupsViewController: UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        provider.viewModels.count
+        viewModels.count
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         guard let cell: GroupTableViewCell = tableView.dequeueReusableCell(
             withIdentifier: GroupTableViewCell.identifier
-        ) as? GroupTableViewCell else { return UITableViewCell() }
-        cell.configure(group: provider.viewModels[indexPath.row])
+        ) as? GroupTableViewCell else { preconditionFailure("CatalogGroupsViewController.dequeueReusableCell Error") }
+
+        let model = viewModels[indexPath.row]
+        
+        presenter.loadImageAsync(for: indexPath, model: model)
+
+        cell.configure(group: model)
         return cell
     }
 }
 
 // MARK: - UISearchBarDelegate
-extension CatalogGroupsListViewController: UISearchBarDelegate {
-    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
-        // Eсли текст поиска пустой, то загружается общий каталог групп.
-        if searchText.isEmpty {
-            provider.setSearchText()
-        } else {
-            provider.setSearchText(searchText)
-        }
 
+extension CatalogGroupsViewController: UISearchBarDelegate {
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        presenter.updateSearchText(searchText)
+        
         // debounce для текста поиска, выполняется когда прекратится ввод данных
         NSObject.cancelPreviousPerformRequests(
             withTarget: self as Any,
-            selector: #selector(searchAction),
+            selector: #selector(searchDebounceAction),
             object: nil)
-        perform(#selector(searchAction), with: nil, afterDelay: 1)
+        perform(#selector(searchDebounceAction), with: nil, afterDelay: 1)
     }
 
     // MARK: - Actions
-    /// Запрос на поиск группы по названию.
-    @objc private func searchAction() {
-        fetchCatalogGroups()
+
+    @objc private func searchDebounceAction() {
+        // Eсли текст поиска пустой, то загружается общий каталог групп.
+
+        presenter.fetchCatalog()
     }
 }

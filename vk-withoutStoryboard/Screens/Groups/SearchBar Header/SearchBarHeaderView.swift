@@ -7,41 +7,41 @@
 
 import UIKit
 
-/// Static  header  searchBar.
+/// Static header searchBar.
 ///
-/// Два вида установки:
-/// - скрытая строка поиска с функцией анимации появления и исчезанию.
-/// - постоянная.
+/// Two types of installation:
+/// - hidden search string with function of animation of appearance and disappearance.
+/// - constant.
 final class SearchBarHeaderView: UIView {
-    // MARK: - Private Properties
-    private let searchBar: UISearchBar = {
+    // MARK: - Public Properties
+
+    var delegate: UISearchBarDelegate? {
+        get {
+            searchBar.delegate
+        }
+
+        set {
+            searchBar.delegate = newValue
+        }
+    }
+
+    // MARK: - Visual Components
+
+    private lazy var searchBar: UISearchBar = {
         let searchbar = UISearchBar()
         searchbar.translatesAutoresizingMaskIntoConstraints = false
         return searchbar
     }()
 
+    // MARK: - Private Properties
+
     private var heightConstraint: NSLayoutConstraint?
 
-    // MARK: - Public Properties
-    /// Значение которое сейчас введено в поисковой строке.
-    var text: String? {
-        searchBar.text
-    }
-
-    enum Work {
-        case on
-        case off
-
-        /// Переключатель
-        mutating func toggle() {
-            self = self == .on ? .off : .on
-        }
-    }
-
     /// Переключатель режима.
-    lazy var isOpen: Work = .off
+    private var isOpen: Bool = false
 
     // MARK: - Initializers
+
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupUI()
@@ -52,7 +52,8 @@ final class SearchBarHeaderView: UIView {
     }
 
     // MARK: - Setting UI Method
-    /// Настройка UI.
+
+    ///  Setup UI.
     private func setupUI() {
         searchBar.backgroundColor = .clear
         searchBar.backgroundImage = UIImage()
@@ -70,15 +71,8 @@ final class SearchBarHeaderView: UIView {
         ])
     }
 
-    // MARK: - Public Methods
-    /// Delegate поисковой строки.
-    /// - Parameter controller: контроллер на котором  searchBar.
-    func setDelegate(_ controller: UIViewController) {
-        searchBar.delegate = controller as? UISearchBarDelegate
-    }
-
-    /// Задать начальную высоту.
-    /// - Parameter height: Высота поисковой строки.
+    /// Set initial height.
+    /// - Parameter height: The height of the search string.
     func setHeightConstraint(_ height: CGFloat) {
         heightConstraint = NSLayoutConstraint(item: self,
                                               attribute: .height,
@@ -89,30 +83,28 @@ final class SearchBarHeaderView: UIView {
                                               constant: height)
         addConstraint(heightConstraint!)
 
-        // Если начальная высота 0, значит он будет скрытый.
+        // If the initial height is 0, then it will be hidden.
         if height == 0 {
             searchBar.alpha = 0
         }
     }
 
-    /// Появление/Исчезание  поисковой строки.
+    /// Toggle hide search Bar.
     func switchSearchBar() {
         switch isOpen {
-        case .off:
-            // изменяется высота и пересчитываются сonstraint
+        case false:
+            // change the height and recalculate the constraint
             self.heightConstraint?.constant = 40
             self.layoutIfNeeded()
 
             UIView.animate(withDuration: 0.3, delay: 0.3, options: .curveEaseIn) {
-                // появление
                 self.searchBar.alpha = 1
             }
-        case .on:
+        case true:
             UIView.animate(withDuration: 0.3, delay: 0.3, options: .curveEaseIn) {
-                // исчезание
                 self.searchBar.alpha = 0
             } completion: { _ in
-                // изменяется высота и пересчитываются сonstraint
+                // change the height and recalculate the constraint
                 self.heightConstraint?.constant = 0
                 self.layoutIfNeeded()
             }
