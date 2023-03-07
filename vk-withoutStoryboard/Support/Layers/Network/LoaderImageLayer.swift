@@ -7,14 +7,16 @@
 
 import UIKit
 
-// MARK: - Extension
-extension LoaderImageLayer {
-    // перечисление режимов работы кэширования
-    enum Cache {
-        case fileCache
-        case nsCache
-        case off
-    }
+protocol LoaderImage {
+    static var shared: LoaderImage { get }
+    func loadAsync(url: String, cache: Cache) async throws -> UIImage
+}
+
+// перечисление режимов работы кэширования
+enum Cache {
+    case fileCache
+    case nsCache
+    case off
 }
 
 /// Singleton для загрузки изображения  с возможностью кеширования.

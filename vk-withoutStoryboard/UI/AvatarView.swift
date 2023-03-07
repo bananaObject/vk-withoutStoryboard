@@ -71,7 +71,7 @@ final class AvatarView: UIView {
     func loadImage(_ url: String) {
         Task(priority: .background) {
             do {
-                self.imageView.image = try await LoaderImageLayer.shared.loadAsync(url: url, cache: .fileCache)
+                self.imageView.image = try await LoaderImageLayerProxy.shared.loadAsync(url: url, cache: .fileCache)
             } catch {
                 print(error)
             }

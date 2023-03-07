@@ -38,7 +38,10 @@ final class FriendsListScreenProvider: ApiLayer {
             } catch {
                 print(error)
             }
-            await loadView.animation(.off)
+
+            await MainActor.run {
+                    loadView.animation(.off)
+            }
         }
     }
     
